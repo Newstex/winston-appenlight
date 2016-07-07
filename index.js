@@ -8,8 +8,10 @@ var util = require('util');
 var winston = require('winston');
 var request = require('request');
 var _ = require('lodash');
+var Batcher = require('batcher');
 
 winston.transports.AppEnlight = function (options, logger) {
+	var self = this;
 	winston.Transport.call(this, _.pick(options, 'level'));
 
 	// Default options
@@ -23,6 +25,24 @@ winston.transports.AppEnlight = function (options, logger) {
 	// For backward compatibility with deprecated `globalTags` option
 	options.tags = options.tags || options.globalTags;
 	this.options = _.defaultsDeep(options, this.defaults);
+
+	// Allow queing up logs to send in a batch
+	this.logBatch = new Batcher(5000); // Send once every 5 seconds
+	this.logBatch.on('ready', function sendLogs(logs){
+		request({
+			method: 'POST',
+			uri: self.options.host,
+			headers: {
+				'X-appenlight-api-key': self.options.key,
+			},
+			json: logs,
+		}, function(e,r,b){
+			if(!/^OK/.test(b)){
+				console.error('AppEnlight Log Error:', b);
+			}
+		});
+	});
+
 
 };
 
@@ -78,31 +98,19 @@ winston.transports.AppEnlight.prototype.log = function (level, msg, meta, callba
 				}
 			}
 		}
-		request({
-			method: 'POST',
-			uri: this.options.host,
-			headers: {
-				'X-appenlight-api-key': this.options.key,
-			},
-			json: [{
-				log_level: level,
-				message: msg,
-				namespace: this.options.namespace,
-				request_id: request_id,
-				server: require('os').hostname(),
-				date: new Date().toISOString(),
-				tags: tags,
-			}],
-		}, function(e,r,b){
-			if(!/^OK/.test(b)){
-				console.error('AppEnlight Error:', b);
-			}
-			callback(null, true);
+		this.logBatch.push({
+			log_level: level,
+			message: msg,
+			namespace: this.options.namespace,
+			request_id: request_id,
+			server: require('os').hostname(),
+			date: new Date().toISOString(),
+			tags: tags,
 		});
 	} catch(err) {
 		console.error(err);
-		callback(null, true);
 	}
+	callback(null, true);
 };
 
 module.exports = winston.transports.AppEnlight;
