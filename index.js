@@ -29,18 +29,22 @@ winston.transports.AppEnlight = function (options, logger) {
 	// Allow queing up logs to send in a batch
 	this.logBatch = new Batcher(5000); // Send once every 5 seconds
 	this.logBatch.on('ready', function sendLogs(logs){
-		request({
-			method: 'POST',
-			uri: self.options.host,
-			headers: {
-				'X-appenlight-api-key': self.options.key,
-			},
-			json: logs,
-		}, function(e,r,b){
-			if(!/^OK/.test(b)){
-				console.error('AppEnlight Log Error:', b);
-			}
-		});
+		try{
+			request({
+				method: 'POST',
+				uri: self.options.host,
+				headers: {
+					'X-appenlight-api-key': self.options.key,
+				},
+				json: logs,
+			}, function(e,r,b){
+				if(!/^OK/.test(b)){
+					console.error('AppEnlight Log Error:', b);
+				}
+			});
+		} catch(e){
+			console.error('AppEnlight Log Exception:', e);
+		}
 	});
 
 
