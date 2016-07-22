@@ -78,19 +78,23 @@ function flattenObject(meta, tags, prefix){
 }
 
 winston.transports.AppEnlight.prototype.log = function (level, msg, meta, callback) {
-	meta = meta || {};
-	var request_id = meta.request_id;
-	if(meta.req && meta.req.id){
-		request_id = meta.req.id;
-	}
-	// Add Meta "tags"
-	var tags = flattenObject(meta, _.toPairs(this.options.tags));
-
-	if(request_id){
-		tags.push(['request_id', request_id]);
-	}
-
 	try {
+		// Allow stripping out color codes from log messages
+		if(this.options.decolorize){
+			msg = msg.replace(/\u001b\[[0-9]{1,2}m/g, '');
+		}
+		meta = meta || {};
+		var request_id = meta.request_id;
+		if(meta.req && meta.req.id){
+			request_id = meta.req.id;
+		}
+		// Add Meta "tags"
+		var tags = flattenObject(meta, _.toPairs(this.options.tags));
+
+		if(request_id){
+			tags.push(['request_id', request_id]);
+		}
+
 		if(level == 'error') {
 			// Support exceptions logging
 			if (meta instanceof Error) {
@@ -112,7 +116,7 @@ winston.transports.AppEnlight.prototype.log = function (level, msg, meta, callba
 			tags: tags,
 		});
 	} catch(err) {
-		console.error(err);
+		console.error('AppEnlight Logging Error', err);
 	}
 	callback(null, true);
 };
