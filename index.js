@@ -10,7 +10,7 @@ var request = require('request');
 var _ = require('lodash');
 var Batcher = require('batcher');
 
-winston.transports.AppEnlight = function (options, logger) {
+winston.transports.AppEnlight = function (options, agent) {
 	var self = this;
 	winston.Transport.call(this, _.pick(options, 'level'));
 
@@ -21,6 +21,7 @@ winston.transports.AppEnlight = function (options, logger) {
 		tags: {},
 		extra: [],
 	};
+	this.agent = agent;
 
 	// For backward compatibility with deprecated `globalTags` option
 	options.tags = options.tags || options.globalTags;
@@ -83,10 +84,15 @@ winston.transports.AppEnlight.prototype.log = function (level, msg, meta, callba
 		if(this.options.decolorize){
 			msg = msg.replace(/\u001b\[[0-9]{1,2}m/g, '');
 		}
-		meta = meta || {};
+		meta = _.extend({}, meta);
+		// Request ID can be passed in as metadata
 		var request_id = meta.request_id;
 		if(meta.req && meta.req.id){
 			request_id = meta.req.id;
+		}
+		// Allow pulling the request ID right from the "AppEnlight Agent"
+		if(!request_id && this.agent !== undefined && this.agent.currentTransaction !== undefined){
+			request_id = this.agent.currentTransaction.req.id;
 		}
 		// Add Meta "tags"
 		var tags = flattenObject(meta, _.toPairs(this.options.tags));
