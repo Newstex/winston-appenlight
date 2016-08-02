@@ -1,6 +1,6 @@
 {
   "name": "winston-appenlight",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "AppEnlight transport for Winston",
   "main": "index.js",
   "scripts": {
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/Newstex/winston-appenlight#readme",
   "dependencies": {
+    "batcher": "git+https://github.com/Newstex/batcher.git",
     "lodash": "^4.13.1",
     "request": "^2.72.0"
   },
