@@ -13,7 +13,7 @@ Just like with any other Winston transport, this can be set up by passing it as 
 				level: 'info',
 				namespace: 'MY_APP_NAMESPACE',
 				key: 'MY_AE_KEY',
-				host: 'OPTIONAL_AE_CUSTOM_URL', // Default https://api.appenlight.com/api/logs?protocol_version=0.5
+				base_url: 'OPTIONAL_AE_CUSTOM_URL', // Default https://api.appenlight.com/api
 				// Optional global tags to send along with every request
 				tags: {
 					app: 'OptionalAppName',
