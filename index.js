@@ -33,7 +33,7 @@ winston.transports.AppEnlight = function (options, agent) {
 		try{
 			request({
 				method: 'POST',
-				uri: self.options.host,
+				uri: self.options.host || self.options.base_url + '/logs?protocol_version=0.5',
 				headers: {
 					'X-appenlight-api-key': self.options.key,
 				},
