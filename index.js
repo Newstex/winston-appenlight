@@ -10,6 +10,8 @@ var request = require('request');
 var _ = require('lodash');
 var Batcher = require('batcher');
 
+var DEFAULT_BASE_URL = 'https://api.appenlight.com/api';
+
 winston.transports.AppEnlight = function (options, agent) {
 	var self = this;
 	winston.Transport.call(this, _.pick(options, 'level'));
@@ -33,14 +35,14 @@ winston.transports.AppEnlight = function (options, agent) {
 		try{
 			request({
 				method: 'POST',
-				uri: self.options.host || self.options.base_url + '/logs?protocol_version=0.5',
+				uri: self.options.host || self.options.base_url || DEFAULT_BASE_URL + '/logs?protocol_version=0.5',
 				headers: {
 					'X-appenlight-api-key': self.options.key,
 				},
 				json: logs,
 			}, function(e,r,b){
-				if(!/^OK/.test(b)){
-					console.error('AppEnlight Log Error:', b);
+				if (e || r.statusCode !== 200) {
+					console.error('AppEnlight Log Error:', e);
 				}
 			});
 		} catch(e){
